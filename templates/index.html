@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6 shadow-lg rounded-lg max-w-lg mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center">Import TV Time Data to Serializd</h1>
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" class="space-y-4">
+        <div class="form-control w-full max-w-md mx-auto">
+            <label class="label">
+                <span class="label-text">Upload tracking-prod-records-v2.csv</span>
+            </label>
+            <input type="file" name="file" class="file-input file-input-bordered w-full max-w-md text-black" />
+        </div>
+        <div class="flex justify-center">
+            <button id="btn-generate" type="submit" class="btn btn-primary w-full max-w-md">Generate Mapping</button>
+        </div>
+    </form>
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="mt-8 w-full max-w-md mx-auto hidden">
+        <div id="progress-bar-container">
+            <h3 class="text-lg font-semibold mb-2 text-center">Mapping...</h3>
+            <progress class="progress progress-primary w-full" id="progress-bar" value="0" max="100"></progress>
+            <div class="text-right mt-1" id="progress-percent">0 / 0 records</div>
+        </div>
+        <div id="completion-message" class="hidden text-center mt-4">
+            <p id="mapping-summary" class="font-semibold"></p>
+            <a href="/unmapped" class="btn btn-primary mt-2">Preview Unmapped Shows</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    document.getElementById("uploadForm").onsubmit = async function(event) {
+        event.preventDefault();
+        const btnGenerate = document.getElementById("btn-generate");
+        const progressSection = document.getElementById("progress-section");
+
+        const formData = new FormData(event.target);
+        await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+        console.log("Mapping")
+
+        btnGenerate.disabled = true
+        document.querySelectorAll('.file-input').forEach(input => input.disabled = true);
+        progressSection.classList.remove("hidden");
+    };
+
+    // Listen for progress updates from the server
+    socket.on('progress', function(data) {
+        const progressBar = document.getElementById("progress-bar");
+        const progressPercent = document.getElementById("progress-percent");
+
+        progressBar.value = data.progress;
+        progressPercent.innerHTML = `${data.index} / ${data.total} rows`;
+    });
+
+    // Listen for completion
+    socket.on('complete', function(data) {
+        document.getElementById("mapping-summary").textContent = `${data.mapped} / ${data.mapped + data.unmapped} entries mapped.`;
+        document.getElementById("completion-message").classList.remove("hidden");
+        document.querySelector('#progress-bar-container').classList.add("hidden");
+    });
+</script>
+{% endblock %}

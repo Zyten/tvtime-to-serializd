@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6 bg-white shadow rounded">
+    <h2 class="text-xl font-semibold mb-4">Mapping Summary</h2>
+    <p><strong>Mapped Shows:</strong> {{ mapped_count }}</p>
+    <p><strong>Unmapped Shows:</strong> {{ unmapped_count }}</p>
+
+    <h3 class="text-lg font-semibold mt-6 mb-4">Manual Mapping</h3>
+    <table class="min-w-full bg-white border border-gray-300 rounded">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left">Title (TV Time)</th>
+                <th class="px-4 py-2 text-left">TMDb Entry</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tvdb_id, entry in unmapped_entries.items() %}
+            <tr class="border-t border-gray-200">
+                <td class="px-4 py-2">{{ entry.title }}</td>
+                <td class="px-4 py-2 relative">
+                    <input type="text" placeholder="Search TMDb..." class="search-input border rounded p-2 w-full" data-tvdb-id="{{ tvdb_id }}">
+                    <div class="search-results absolute z-10 bg-white border rounded mt-1 hidden w-full"></div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-6 text-center">
+        <button id="save-mappings" class="btn btn-primary">Save Mappings</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    document.querySelectorAll(".search-input").forEach(input => {
+        input.addEventListener("input", debounce(function() {
+            const tvdb_id = this.dataset.tvdbId;
+            const query = this.value;
+            const searchResults = this.nextElementSibling;
+
+            // Perform search if query has at least 2 characters
+            if (query.length >= 2) {
+                fetch("/search_local_tmdb", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ query })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    searchResults.innerHTML = "";
+                    searchResults.classList.remove("hidden");
+
+                    // Populate search results dropdown
+                    data.results.forEach(result => {
+                        const item = document.createElement("div");
+                        item.classList.add("p-2", "cursor-pointer", "hover:bg-gray-200");
+                        item.textContent = result.name;
+                        item.dataset.tmdbId = result.id;
+                        item.addEventListener("click", () => selectResult(tvdb_id, result.id, result.name));
+                        searchResults.appendChild(item);
+                    });
+                });
+            } else {
+                searchResults.classList.add("hidden");
+            }
+        }, 300));
+    });
+
+    document.getElementById("save-mappings").addEventListener("click", function() {
+        const mappings = {};
+
+        document.querySelectorAll(".search-input").forEach(input => {
+            const tvdb_id = input.dataset.tvdbId;
+            const tmdb_id = input.dataset.tmdbId;
+            if (tmdb_id) {
+                mappings[tvdb_id] = tmdb_id;
+            }
+        });
+
+        fetch("/manual_map", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(mappings)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert("Mappings saved successfully!");
+            location.reload();
+        });
+    });
+
+    function selectResult(tvdb_id, tmdb_id, name) {
+        const input = document.querySelector(`input[data-tvdb-id="${tvdb_id}"]`);
+        console.log(input)
+        input.value = name;
+        input.dataset.tmdbId = tmdb_id;
+
+        const searchResults = input.nextElementSibling;
+        searchResults.classList.add("hidden");
+    }
+
+    function debounce(func, delay) {
+        let debounceTimer;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+});
+</script>
+{% endblock %}

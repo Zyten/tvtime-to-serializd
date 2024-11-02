@@ -1,0 +1,8 @@
+env
+.~*
+
+*.zip
+*.gz
+tv-time-personal-data
+*.csv
+tmdb/*.json
