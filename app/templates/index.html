@@ -28,10 +28,7 @@
     </div>
 </div>
 
-<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script>
-    const socket = io.connect('http://' + document.domain + ':' + location.port);
-
     document.getElementById("uploadForm").onsubmit = async function(event) {
         event.preventDefault();
         const btnGenerate = document.getElementById("btn-generate");
@@ -55,43 +52,46 @@
         btnGenerate.disabled = true;
         document.querySelectorAll('.file-input').forEach(input => input.disabled = true);
         progressSection.classList.remove("hidden");
+
+        // Initialize EventSource for SSE updates
+        const eventSource = new EventSource('/progress');
+
+        eventSource.onmessage = function(event) {
+            const data = event.data.split(',');
+            const type = data[0];
+            if (type === "complete") {
+                document.getElementById("mapping-summary").textContent = 
+                    `${data[1]} / ${Number(data[1]) + Number(data[2])} entries mapped.`;
+                document.getElementById("completion-message").classList.remove("hidden");
+                document.querySelector('#progress-bar-container').classList.add("hidden");
+
+                eventSource.close();
+            } else if (type === "error") {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-error mt-4';
+                errorDiv.textContent = `Error: ${data[1]}`;
+                progressSection.appendChild(errorDiv);
+                eventSource.close();
+            } else {
+                // Progress update
+                const progress = data[0];
+                const index = data[1];
+                const total = data[2];
+                const progressBar = document.getElementById("progress-bar");
+                const progressPercent = document.getElementById("progress-percent");
+
+                progressBar.value = progress;
+                progressPercent.innerHTML = `${index} / ${total} rows`;
+            }
+        };
+
+        eventSource.onerror = function() {
+            eventSource.close();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-error mt-4';
+            errorDiv.textContent = 'Connection lost. Please try again.';
+            progressSection.appendChild(errorDiv);
+        };
     };
-
-    socket.on('progress', function(data) {
-        const progressBar = document.getElementById("progress-bar");
-        const progressPercent = document.getElementById("progress-percent");
-
-        progressBar.value = data.progress;
-        progressPercent.innerHTML = `${data.index} / ${data.total} rows`;
-    });
-
-    socket.on('complete', function(data) {
-        document.getElementById("mapping-summary").textContent = 
-            `${data.mapped} / ${data.mapped + data.unmapped} entries mapped.`;
-        document.getElementById("completion-message").classList.remove("hidden");
-        document.querySelector('#progress-bar-container').classList.add("hidden");
-        
-        // Optional: Auto-redirect after a delay
-        setTimeout(() => {
-            window.location.href = '/result';
-        }, 1500);
-    });
-
-    socket.on('error', function(data) {
-        const progressSection = document.getElementById("progress-section");
-        const progressBar = document.getElementById("progress-bar-container");
-        const completionMessage = document.getElementById("completion-message");
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-error mt-4';
-        errorDiv.textContent = `Error: ${data.message}`;
-        progressSection.appendChild(errorDiv);
-        
-        progressBar.classList.add('hidden');
-        completionMessage.classList.add('hidden');
-        
-        document.getElementById("btn-generate").disabled = false;
-        document.querySelectorAll('.file-input').forEach(input => input.disabled = false);
-    });
 </script>
 {% endblock %}

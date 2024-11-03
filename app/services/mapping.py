@@ -6,8 +6,16 @@ class MappingService:
         self.tmdb_service = tmdb_service
         self.mapped_entries: Dict[str, Any] = {}
         self.unmapped_entries: Dict[str, Any] = {}
+        self.progress_updates = []  # Stores progress updates for SSE streaming
+
+    def get_progress_stream(self):
+        for progress, index, total in self.progress_updates:
+            yield f"{progress},{index},{total}"
+        yield f"complete,{len(self.mapped_entries)},{len(self.unmapped_entries)}"
 
     def process_dataframe(self, tv_time_data, progress_callback=None):
+        self.progress_updates = []
+
         # Replace NaN in 'series_name' with empty strings
         tv_time_data['series_name'] = tv_time_data['series_name'].fillna('')
         # Drop rows with missing s_id
@@ -48,8 +56,9 @@ class MappingService:
 
                 time.sleep(0.3)  # Rate limiting
 
+            progress = (index + 1) / total_rows * 100
+            self.progress_updates.append((progress, index + 1, total_rows))
             if progress_callback:
-                progress = (index + 1) / total_rows * 100
                 progress_callback(progress, index + 1, total_rows)
 
         return {

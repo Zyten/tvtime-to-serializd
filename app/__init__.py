@@ -1,9 +1,7 @@
 from flask import Flask
-from flask_socketio import SocketIO
 from supabase import create_client, Client
 from config import Config
 
-socketio = SocketIO(cors_allowed_origins="*")
 tmdb_service = None
 mapping_service = None
 
@@ -13,8 +11,7 @@ def create_app(config_object=Config):
                 static_folder='static')
     
     app.config.from_object(config_object)
-    socketio.init_app(app)
-    
+
     supabase: Client = create_client(
         app.config['SUPABASE_URL'],
         app.config['SUPABASE_KEY']
