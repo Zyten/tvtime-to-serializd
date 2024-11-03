@@ -8,6 +8,7 @@ A tool to help users migrate their TV show lists from TVTime to Serializd.
 - Maps shows to TMDB entries (which Serializd uses)
 - Provides clean list of show titles ready for Serializd import
 - Identifies unmapped shows for reference
+- Watch Status is not supported - lists all shows added to TV Time
 
 ## Setup
 
@@ -77,9 +78,9 @@ The app will be available at http://localhost:5000
 3. Upload `tracking-prod-records-v2.csv` into the app
 4. Copy the mapped shows list
 5. Goto Serializd Settings > Import Data
-6. Paste and Submit (Mark as Watched)
+6. Paste and Submit (Add to Watchlist)
 Note: There's no progress bar or success message.
-7. Open your Serializd profile in new tab to see if Watched list count matches what you pasted
+7. Open your Serializd profile in new tab to see if Watchlist count matches what you got from the app
 
 ### Deployment
 
