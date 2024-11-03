@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 space-y-8">
+    <!-- Summary Card -->
+    <div class="stats shadow w-full">
+        <div class="stat">
+            <div class="stat-title">Mapped Shows</div>
+            <div class="stat-value text-primary">{{ mapped_count }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Unmapped Shows</div>
+            <div class="stat-value text-secondary">{{ unmapped_count }}</div>
+        </div>
+    </div>
+
+    <!-- Mapped Shows Section -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-success">
+                Ready for Serializd Import
+                <div class="badge badge-success">{{ mapped_count }} shows</div>
+            </h2>
+            <div class="form-control">
+                <textarea id="mapped-shows" class="textarea textarea-bordered h-48" readonly>{% for show in mapped_shows %}{{ show }}
+{% endfor %}</textarea>
+            </div>
+            <div class="card-actions justify-end">
+                <button class="btn btn-primary" onclick="copyToClipboard('mapped-shows')">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unmapped Shows Section -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-warning">
+                Unmapped Shows
+                <div class="badge badge-warning">{{ unmapped_count }} shows</div>
+            </h2>
+            <div class="form-control">
+                <textarea id="unmapped-shows" class="textarea textarea-bordered h-48" readonly>{% for show in unmapped_shows %}{{ show }}
+{% endfor %}</textarea>
+            </div>
+            <div class="card-actions justify-end">
+                <button class="btn btn-secondary" onclick="copyToClipboard('unmapped-shows')">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    const textarea = document.getElementById(elementId);
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Show toast or alert (you can use a library like toastify-js or DaisyUI's toast)
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success fixed bottom-4 right-4 w-auto';
+    toast.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>Copied to clipboard!</span>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+{% endblock %}
