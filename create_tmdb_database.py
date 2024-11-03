@@ -3,8 +3,8 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = 'tmdb_data.db'
 TMDB_FOLDER = 'tmdb'
+DB_PATH = f'{TMDB_FOLDER}/tv_series.db'
 
 def get_latest_tv_show_file():
     # Filter for tv show files and sort by date in filename

@@ -6,3 +6,4 @@ env
 tv-time-personal-data
 *.csv
 tmdb/*.json
+.env

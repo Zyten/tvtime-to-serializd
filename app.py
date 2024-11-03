@@ -4,6 +4,14 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import os
 import threading
+import requests
+import time
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+TMDB_BASE_URL = "https://api.themoviedb.org/3/find"
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -15,6 +23,34 @@ mapped_entries, unmapped_entries = {}, {}
 @app.route('/')
 def index():
 	return render_template('index.html')
+
+def find_by_tvdb_id(tvdb_id):
+	try:
+		url = f"{TMDB_BASE_URL}/{tvdb_id}"
+		headers = {
+			"accept": "application/json",
+			"Authorization": f"Bearer {TMDB_API_KEY}"
+		}
+
+		params = {
+			"external_source": "tvdb_id",
+		}
+		response = requests.get(url, headers=headers, params=params)
+
+		response.raise_for_status()
+		data = response.json()
+
+		if data.get("tv_results"):
+			tv_show = data["tv_results"][0]
+			return {
+                "tmdb_id": tv_show["id"],
+                "tmdb_name": tv_show["name"],
+                "tmdb_original_name": tv_show["original_name"],
+            }
+	except requests.exceptions.RequestException as e:
+		print(f"API request failed for TVDB ID {tvdb_id}: {e}")
+	return None
+
 
 @app.route('/upload', methods=['POST'])
 def upload_files():
@@ -29,10 +65,10 @@ def upload_files():
 def generate_mapping(file):
 	print("Starting TV show mapping")
 
-	# Load TV Time CSV data
-	tv_time_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], file))
+	# Load TV Time CSV data as String columns
+	tv_time_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], file), dtype=str)
 	# Replace NaN in 'series_name' with empty strings
-	tv_time_data['series_name'].fillna('', inplace=True)
+	tv_time_data['series_name'] = tv_time_data['series_name'].fillna('')
 	# Drop rows with missing s_id
 	tv_time_data = tv_time_data.dropna(subset=['s_id'])
 	# Drop duplicates, and reset index
@@ -62,12 +98,24 @@ def generate_mapping(file):
 				'title': title,
 				'tmdb_name': tmdb_name,
 			}
+			print(f"{index + 1}/{total_rows}: {title} mapped with LOCAL DB")
 		else:
-			unmapped_entries[tvdb_id] = {'title': title}
+			tmdb_data = find_by_tvdb_id(tvdb_id)
+			if tmdb_data:
+				mapped_entries[tvdb_id] = {
+					'tmdb_id': tmdb_data["tmdb_id"],
+					'title': title,
+					'tmdb_name': tmdb_data["tmdb_original_name"]
+				}
+				print(f"{index + 1}/{total_rows}: {title} mapped with ONLINE DB")
+			else:
+				unmapped_entries[tvdb_id] = {'title': title}
+				print(f"{index + 1}/{total_rows}: {title} is UNMAPPED")
+
+			time.sleep(0.3)
 
 		progress = (index + 1) / total_rows * 100
 		socketio.emit('progress', {'progress': progress, 'index': index + 1, 'total': total_rows})
-		print(f"Processed {index + 1}/{total_rows}: {title}")
 
 	conn.close()
 	socketio.emit('complete', {'mapped': len(mapped_entries), 'unmapped': len(unmapped_entries)})
