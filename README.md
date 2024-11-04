@@ -1,4 +1,4 @@
-![App Logo](app/static/tvtime-to-serializd-logo.svg)
+<img src="app/static/tvtime-to-serializd-logo.svg" width="200" height="200" alt="App Logo">
 
 # TVTime to Serializd
 
