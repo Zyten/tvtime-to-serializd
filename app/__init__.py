@@ -3,7 +3,6 @@ from supabase import create_client, Client
 from config import Config
 
 tmdb_service = None
-mapping_service = None
 
 def create_app(config_object=Config):
     app = Flask(__name__, 
@@ -17,17 +16,15 @@ def create_app(config_object=Config):
         app.config['SUPABASE_KEY']
     )
     
-    global tmdb_service, mapping_service
+    global tmdb_service
     from .services.tmdb import TMDBService
-    from .services.mapping import MappingService
     
     tmdb_service = TMDBService(
         supabase=supabase,
         api_key=app.config['TMDB_API_KEY'],
         base_url=app.config['TMDB_BASE_URL']
     )
-    mapping_service = MappingService(tmdb_service)
-    
+
     from . import routes
     app.register_blueprint(routes.bp)
     

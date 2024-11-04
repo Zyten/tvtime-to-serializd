@@ -1,9 +1,13 @@
 from flask import Blueprint, render_template, request, jsonify, Response, stream_with_context
 import pandas as pd
 import threading
-from . import mapping_service
+from . import tmdb_service
+from .services.mapping import MappingService
+import uuid
 
 bp = Blueprint('main', __name__)
+
+mapping_services = {}
 
 @bp.route('/')
 def index():
@@ -25,16 +29,28 @@ def upload_files():
         # Load TV Time CSV data as String columns, directly from memory
         tv_time_data = pd.read_csv(file.stream, dtype=str)
 
+        # Generate a unique task_id
+        task_id = str(uuid.uuid4())
+        # Create a new MappingService instance
+        mapping_service = MappingService(tmdb_service)
+        # Store the instance in the global mapping_services dictionary
+        mapping_services[task_id] = mapping_service
+
         # Start processing in a separate thread to allow asynchronous streaming
         threading.Thread(target=mapping_service.process_dataframe, args=(tv_time_data,)).start()
 
-        return jsonify({"status": "Mapping started"}), 200
+        return jsonify({"status": "Mapping started", "task_id": task_id}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 # Separate GET endpoint for SSE progress updates
 @bp.route('/progress', methods=['GET'])
 def progress():
+    task_id = request.args.get('task_id')
+    mapping_service = mapping_services.get(task_id)
+    if not mapping_service:
+        return 'No mapping service found for this task ID.', 404
+
     def generate():
         for update in mapping_service.get_progress_stream():
             yield f"data: {update}\n\n"
@@ -45,9 +61,17 @@ def progress():
 
 @bp.route('/result')
 def result():
+    task_id = request.args.get('task_id')
+    mapping_service = mapping_services.get(task_id)
+    if not mapping_service:
+        return 'No mapping service found for this task ID.', 404
+
     mapped_shows = [entry['tmdb_name'] for entry in mapping_service.mapped_entries.values()]
     unmapped_shows = [entry['title'] for entry in mapping_service.unmapped_entries.values()]
-    
+
+    # TODO: This is not too reliable - what if user never reaches the results page?
+    mapping_services.pop(task_id, None)
+
     return render_template(
         'result.html',
         mapped_shows=mapped_shows,

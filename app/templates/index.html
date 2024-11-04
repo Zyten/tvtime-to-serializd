@@ -49,12 +49,15 @@
             return;
         }
 
+        const data = await response.json();
+        const taskId = data.task_id;
+
         btnGenerate.disabled = true;
         document.querySelectorAll('.file-input').forEach(input => input.disabled = true);
         progressSection.classList.remove("hidden");
 
         // Initialize EventSource for SSE updates
-        const eventSource = new EventSource('/progress');
+        const eventSource = new EventSource(`/progress?task_id=${taskId}`);
 
         eventSource.onmessage = function(event) {
             const data = event.data.split(',');
@@ -62,6 +65,11 @@
             if (type === "complete") {
                 document.getElementById("mapping-summary").textContent = 
                     `${data[1]} / ${Number(data[1]) + Number(data[2])} entries mapped.`;
+
+                // Adjust the "View Results" link to include the task_id
+                const resultLink = document.querySelector('#completion-message a');
+                resultLink.href = `/result?task_id=${taskId}`;
+
                 document.getElementById("completion-message").classList.remove("hidden");
                 document.querySelector('#progress-bar-container').classList.add("hidden");
 
