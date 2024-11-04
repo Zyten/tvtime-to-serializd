@@ -15,20 +15,20 @@ _Note: Watch Status is not supported_
 
 1. Obtain your TV Time data:
 
-- Email TV Time support at support@tvtime.com requesting a copy of your data.
-- After verification, you'll receive tv-time-personal-data.zip, which contains `tracking-prod-records-v2.csv`.
+   - Email TV Time support at support@tvtime.com requesting a copy of your data.
+   - After verification, you'll receive tv-time-personal-data.zip, which contains `tracking-prod-records-v2.csv`.
 
 2. Use the Online Tool:
 
-- Visit tvtime-to-serializd.sruban.me.
-- Upload tracking-prod-records-v2.csv.
-- The app will process your data and generate a list of mapped shows.
-- Copy the generated list.
+   - Visit [tvtime-to-serializd.sruban.me](https://tvtime-to-serializd.sruban.me).
+   - Upload tracking-prod-records-v2.csv.
+   - The app will process your data and generate a list of mapped shows.
+   - Copy the generated list.
 
 3. Import to Serializd:
 
-- Go to Serializd settings > Import Data.
-- Paste the list and submit.
+   - Go to Serializd settings > Import Data.
+   - Paste the list and submit.
 
 ## Running Locally
 
@@ -67,14 +67,14 @@ SUPABASE_KEY=your_supabase_service_key
 
 3. Set up the database:
 
-- Create a new project in Supabase.
-- In the Supabase SQL Editor, run the schema from `database/schema.sql`.
-- Download latest TMDB Daily IDs json and place it in the `tmdb/` directory.
-- Seed the database:
+   - Create a new project in Supabase.
+   - In the Supabase SQL Editor, run the schema from `database/schema.sql`.
+   - Download latest TMDB Daily IDs json and place it in the `tmdb/` directory.
+   - Seed the database:
 
-```bash
-python database/seed.py
-```
+   ```bash
+   python database/seed.py
+   ```
 
 ### Run the application
 
