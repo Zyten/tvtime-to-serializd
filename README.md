@@ -2,14 +2,13 @@
 
 # TVTime to Serializd
 
-A tool to migrate your TV show list from TV Time to Serializd.
+Simple tool to migrate TV Time watchlist to Serializd.
 
 ## Features
 
-- Processes TVTime's CSV export
-- Maps shows to TMDB entries (used by Serializd)
+- Maps TV Time titles to TMDB entries (used by Serializd)
 - Generates a list ready for Serializd import
-- Identifies unmapped shows
+- Identifies shows that can't be imported
 
 _Note: Watch Status is not supported_
 
