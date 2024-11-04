@@ -1,5 +1,6 @@
 from typing import Dict, Any
 import time
+import threading
 
 class MappingService:
     def __init__(self, tmdb_service):
@@ -7,14 +8,25 @@ class MappingService:
         self.mapped_entries: Dict[str, Any] = {}
         self.unmapped_entries: Dict[str, Any] = {}
         self.progress_updates = []  # Stores progress updates for SSE streaming
+        self.update_event = threading.Event()
+        self.processing_complete = False
 
     def get_progress_stream(self):
-        for progress, index, total in self.progress_updates:
-            yield f"{progress},{index},{total}"
+        last_index = 0
+        while not self.processing_complete or last_index < len(self.progress_updates):
+            # Wait until a new update is available or processing is complete
+            self.update_event.wait()
+            while last_index < len(self.progress_updates):
+                progress, index, total = self.progress_updates[last_index]
+                last_index += 1
+                yield f"{progress},{index},{total}"
+            self.update_event.clear()
+        # Send the completion message
         yield f"complete,{len(self.mapped_entries)},{len(self.unmapped_entries)}"
 
-    def process_dataframe(self, tv_time_data, progress_callback=None):
+    def process_dataframe(self, tv_time_data):
         self.progress_updates = []
+        self.processing_complete = False
 
         # Replace NaN in 'series_name' with empty strings
         tv_time_data['series_name'] = tv_time_data['series_name'].fillna('')
@@ -54,12 +66,14 @@ class MappingService:
                     self.unmapped_entries[tvdb_id] = {'title': title}
                     print(f"{index + 1}/{total_rows}: {title} is UNMAPPED")
 
-                time.sleep(0.3)  # Rate limiting
+                time.sleep(0.03)  # Rate limiting - max 30 per second
 
             progress = (index + 1) / total_rows * 100
             self.progress_updates.append((progress, index + 1, total_rows))
-            if progress_callback:
-                progress_callback(progress, index + 1, total_rows)
+            self.update_event.set()  # Signal that a new update is available
+
+        self.processing_complete = True
+        self.update_event.set()
 
         return {
             'mapped': len(self.mapped_entries),

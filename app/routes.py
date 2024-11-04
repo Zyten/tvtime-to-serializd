@@ -25,12 +25,9 @@ def upload_files():
         # Load TV Time CSV data as String columns, directly from memory
         tv_time_data = pd.read_csv(file.stream, dtype=str)
 
-        def progress_callback(progress, index, total):
-            mapping_service.progress_updates.append((progress, index, total))
-
         # Start processing in a separate thread to allow asynchronous streaming
-        threading.Thread(target=mapping_service.process_dataframe, args=(tv_time_data, progress_callback)).start()
-    
+        threading.Thread(target=mapping_service.process_dataframe, args=(tv_time_data,)).start()
+
         return jsonify({"status": "Mapping started"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -41,7 +38,10 @@ def progress():
     def generate():
         for update in mapping_service.get_progress_stream():
             yield f"data: {update}\n\n"
-    return Response(generate(), content_type='text/event-stream')
+    response = Response(stream_with_context(generate()), content_type='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'  # For nginx, if applicable
+    return response
 
 @bp.route('/result')
 def result():
