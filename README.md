@@ -1,3 +1,5 @@
+![App Logo](app/static/tvtime-to-serializd-logo.svg)
+
 # TVTime to Serializd
 
 A tool to migrate your TV show list from TV Time to Serializd.
