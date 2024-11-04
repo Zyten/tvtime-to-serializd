@@ -1,16 +1,38 @@
 # TVTime to Serializd
 
-A tool to help users migrate their TV show lists from TVTime to Serializd.
+A tool to migrate your TV show list from TV Time to Serializd.
 
 ## Features
 
 - Processes TVTime's CSV export
-- Maps shows to TMDB entries (which Serializd uses)
-- Provides clean list of show titles ready for Serializd import
-- Identifies unmapped shows for reference
-- Watch Status is not supported - lists all shows added to TV Time
+- Maps shows to TMDB entries (used by Serializd)
+- Generates a list ready for Serializd import
+- Identifies unmapped shows
 
-## Setup
+_Note: Watch Status is not supported_
+
+## Usage
+
+1. Obtain your TV Time data:
+
+- Email TV Time support at support@tvtime.com requesting a copy of your data.
+- After verification, you'll receive tv-time-personal-data.zip, which contains `tracking-prod-records-v2.csv`.
+
+2. Use the Online Tool:
+
+- Visit tvtime-to-serializd.sruban.me.
+- Upload tracking-prod-records-v2.csv.
+- The app will process your data and generate a list of mapped shows.
+- Copy the generated list.
+
+3. Import to Serializd:
+
+- Go to Serializd settings > Import Data.
+- Paste the list and submit.
+
+## Running Locally
+
+If you prefer to run the app locally, follow these steps.
 
 ### Prerequisites
 
@@ -19,7 +41,21 @@ A tool to help users migrate their TV show lists from TVTime to Serializd.
 - TMDB API key
 - TVTime CSV export (`tracking-prod-records-v2.csv`)
 
-### Environment Variables
+### Installation
+
+1. Clone the repo and install dependencies
+
+```bash
+git clone https://github.com/Zyten/tvtime-to-serializd.git
+cd tvtime-to-serializd
+
+python -m venv env
+source env/bin/activate  # On Windows: env\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+2. Set up environment variables:
 
 Create a `.env` file in the root directory:
 
@@ -29,68 +65,33 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_service_key
 ```
 
-### Installation
+3. Set up the database:
 
-1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/tvtime-to-serializd.git
-cd tvtime-to-serializd
-```
-
-2. Create and activate virtual environment
-
-```bash
-python -m venv env
-source env/bin/activate  # On Windows: env\Scripts\activate
-```
-
-3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Database Setup
-
-1. Create a new project in Supabase
-2. Go to SQL Editor in your Supabase dashboard
-3. Run the schema from database/schema.sql
-4. Download daily TMDB TV shows data and place in tmdb/ directory
-5. Populate database with show data:
+- Create a new project in Supabase.
+- In the Supabase SQL Editor, run the schema from `database/schema.sql`.
+- Download latest TMDB Daily IDs json and place it in the `tmdb/` directory.
+- Seed the database:
 
 ```bash
 python database/seed.py
 ```
 
-### Development
+### Run the application
 
-Run the development server:
 ```bash
-python run.py
+gunicorn api.main:app
 ```
-The app will be available at http://localhost:5000
 
-### Usage
+Access the app at http://localhost:8000.
 
-1. Email TV Time support at `support@tvtime.com` with subject `GDPR Data Request`, requesting a copy of your data.
-2. After passing the verification steps, you'd receive `tv-time-personal-data.zip`, which when extracted, contains `tracking-prod-records-v2.csv` among other things.
-3. Upload `tracking-prod-records-v2.csv` into the app
-4. Copy the mapped shows list
-5. Goto Serializd Settings > Import Data
-6. Paste and Submit (Add to Watchlist)
-Note: There's no progress bar or success message.
-7. Open your Serializd profile in new tab to see if Watchlist count matches what you got from the app
+## Deployment
 
-### Deployment
+- Create a new web service on Render.com
+- Set environment variables in the Render dashboard
+- Deploy the app
 
-This app is designed to be deployed on Vercel:
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy
-
-### Contributing
+## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-### License
+## License
 [GNU AGPLv3](LICENSE)
