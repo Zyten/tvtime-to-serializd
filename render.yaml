@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: tvtime-to-serializd
+    env: python
+    plan: hobby
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k gevent -w 1 -t 120 api.main:app
+    regions:
+      - oregon
+    healthCheckPath: /healthz
+
