@@ -20,7 +20,7 @@ _Note: Watch Status is not supported_
    - After verification, you'll receive tv-time-personal-data.zip, which contains `tracking-prod-records-v2.csv`.
 
 2. Use the Online Tool:
-> Note: Hosted with Render's Hobby tier so it's quite slow to start (app boot as well as mapping)
+> Note: Hosted with Render's Hobby tier so it's quite slow to start (and prone to crashing for some reason)
 
    - Visit [tvtime-to-serializd.sruban.me](https://tvtime-to-serializd.sruban.me).
    - Upload tracking-prod-records-v2.csv.
