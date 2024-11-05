@@ -64,6 +64,7 @@ def result():
     task_id = request.args.get('task_id')
     mapping_service = mapping_services.get(task_id)
     if not mapping_service:
+        print(f'No mapping service found for this task ID: {task_id}')
         return 'No mapping service found for this task ID.', 404
 
     mapped_shows = [entry['tmdb_name'] for entry in mapping_service.mapped_entries.values()]
