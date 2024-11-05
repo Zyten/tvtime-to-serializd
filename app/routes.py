@@ -9,6 +9,10 @@ bp = Blueprint('main', __name__)
 
 mapping_services = {}
 
+@bp.route('/healthz')
+def health_check():
+    return 'OK', 200
+
 @bp.route('/')
 def index():
     return render_template('index.html')
